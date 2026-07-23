@@ -1,0 +1,18 @@
+{
+  "updated_at": "2026-07-23T14:49:22+00:00",
+  "source": "https://ec.europa.eu/commission/presscorner/api/rss?language=en",
+  "items": [
+    {
+      "title": "Daily News 23 / 07 / 2026",
+      "link": "https://ec.europa.eu/commission/presscorner/detail/en/mex_26_1675",
+      "date": "2026-07-23",
+      "summary": "European Commission Daily news Brussels, 23 Jul 2026 Commission fines Google €890 million for breaches of the Digital Markets Act Today, the European Commission took two decisions finding non-compliance by Google ..."
+    },
+    {
+      "title": "Commission fines Google €890 million for breaches of the Digital Markets Act",
+      "link": "https://ec.europa.eu/commission/presscorner/detail/en/ip_26_1670",
+      "date": "2026-07-23",
+      "summary": "欧委会作出两项不合规决定：谷歌搜索自我优待（第 6(5) 条，罚款 4.6 亿欧元）与 Google Play 反引导限制（第 5(4) 条，罚款 4.3 亿欧元）。"
+    }
+  ]
+}

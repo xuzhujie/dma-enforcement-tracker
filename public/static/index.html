@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DMA 执法追踪器 · 静态速览页</title>
+<style>
+  :root {
+    --blue-900: #0b2a6b; --blue-700: #123a8f; --blue-600: #1e56c8;
+    --red-600: #dc2626; --amber-600: #d97706; --slate-800: #1e293b;
+    --slate-600: #475569; --slate-500: #64748b; --slate-400: #94a3b8;
+    --slate-200: #e2e8f0; --slate-100: #f1f5f9; --slate-50: #f8fafc;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif; background: var(--slate-50); color: var(--slate-800); line-height: 1.6; }
+  .container { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  header { background: linear-gradient(135deg, var(--blue-900), var(--blue-700) 55%, var(--blue-600)); color: #fff; padding: 48px 0 40px; }
+  header .eyebrow { font-size: 13px; color: #bfdbfe; }
+  header h1 { font-size: 34px; margin: 8px 0 10px; letter-spacing: -0.5px; }
+  header p { color: #dbeafe; max-width: 640px; font-size: 14.5px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 28px; }
+  .stat { background: rgba(255,255,255,.1); border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(4px); }
+  .stat .k { font-size: 12px; color: #bfdbfe; }
+  .stat .v { font-size: 22px; font-weight: 700; margin-top: 2px; }
+  .stat .s { font-size: 11px; color: rgba(191,219,254,.8); margin-top: 2px; }
+
+  section { margin: 44px 0; }
+  h2 { font-size: 20px; margin-bottom: 4px; }
+  .sub { color: var(--slate-500); font-size: 13px; margin-bottom: 18px; }
+
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(15,23,42,.08); font-size: 14px; }
+  th { background: var(--slate-800); color: #fff; text-align: left; padding: 10px 14px; font-size: 13px; font-weight: 600; }
+  td { padding: 12px 14px; border-top: 1px solid var(--slate-200); vertical-align: top; }
+  tr.total td { background: #fef2f2; font-weight: 700; color: var(--red-600); }
+  .fine { font-weight: 700; color: var(--red-600); white-space: nowrap; }
+  .tag { display: inline-block; font-size: 11px; background: var(--slate-100); color: var(--slate-600); border-radius: 4px; padding: 1px 6px; font-family: ui-monospace, monospace; }
+  .badge { display: inline-block; font-size: 11px; border-radius: 999px; padding: 2px 9px; border: 1px solid; white-space: nowrap; }
+  .b-penalty { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+  .b-proc { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+  .b-closed { background: var(--slate-100); color: var(--slate-600); border-color: var(--slate-200); }
+  .b-related { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .card { background: #fff; border: 1px solid var(--slate-200); border-radius: 12px; padding: 18px 20px; }
+  .card h3 { font-size: 15.5px; margin: 8px 0 4px; }
+  .card .meta { font-size: 12.5px; color: var(--slate-500); margin-bottom: 8px; }
+  .card .amount { font-size: 26px; font-weight: 800; color: var(--red-600); }
+  .card .amount.amber { color: var(--amber-600); }
+  .card p { font-size: 13.5px; color: var(--slate-600); margin-top: 6px; }
+  .card details { margin-top: 10px; font-size: 13px; color: var(--slate-600); }
+  .card summary { cursor: pointer; color: var(--blue-700); font-weight: 600; font-size: 13px; }
+  .card li { margin: 4px 0 0 18px; }
+  .dates { font-size: 12px; color: var(--slate-400); margin-top: 10px; border-top: 1px dashed var(--slate-200); padding-top: 8px; }
+  .warn { color: var(--red-600); }
+  .appeal { color: #7c3aed; }
+
+  .gk { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+  .gk .g { background: #fff; border: 1px solid var(--slate-200); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+  .gk .g.fined { border-color: #fecaca; background: #fef2f2; }
+  .gk .g b { display: block; }
+  .gk .g span { font-size: 11px; color: var(--slate-400); }
+  .gk .g.fined span { color: var(--red-600); font-weight: 600; }
+
+  .rules { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 18px 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; font-size: 13.5px; color: var(--slate-600); }
+  .rules b { color: var(--slate-800); }
+
+  .sources { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .sources a { display: block; background: #fff; border: 1px solid var(--slate-200); border-radius: 10px; padding: 14px; text-decoration: none; color: var(--blue-700); font-weight: 600; font-size: 14px; }
+  .sources a:hover { box-shadow: 0 2px 8px rgba(15,23,42,.1); }
+  .sources a span { display: block; color: var(--slate-500); font-weight: 400; font-size: 12px; margin-top: 4px; }
+
+  footer { border-top: 1px solid var(--slate-200); background: #fff; padding: 20px 0; font-size: 12px; color: var(--slate-400); }
+
+  @media (max-width: 860px) {
+    .stats, .grid, .rules, .sources { grid-template-columns: 1fr 1fr; }
+    .gk { grid-template-columns: repeat(3, 1fr); }
+    table { font-size: 12.5px; }
+  }
+  @media (max-width: 540px) {
+    .stats, .grid, .rules, .sources { grid-template-columns: 1fr; }
+    header h1 { font-size: 26px; }
+  }
+  @media print {
+    header { background: var(--blue-900) !important; -webkit-print-color-adjust: exact; }
+    .card details { display: block; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="eyebrow">欧盟委员会 · 《数字市场法》（Regulation (EU) 2022/1925）</div>
+    <h1>DMA 执法追踪器 · 静态速览</h1>
+    <p>汇总欧委会依据《数字市场法》作出的全部罚款决定、在办程序与关联案件。数据截至 2026 年 7 月 23 日，以官方原文为准。</p>
+    <div class="stats">
+      <div class="stat"><div class="k">DMA 累计罚款</div><div class="v">€15.9 亿</div><div class="s">不含关联反垄断案件</div></div>
+      <div class="stat"><div class="k">罚款决定</div><div class="v">4 项</div><div class="s">针对 3 家守门人</div></div>
+      <div class="stat"><div class="k">被罚守门人</div><div class="v">3 家</div><div class="s">共指定 7 家守门人</div></div>
+      <div class="stat"><div class="k">在办程序</div><div class="v">3 项</div><div class="s">含市场调查</div></div>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <section>
+    <h2>一、DMA 罚款总表（全部 4 项决定）</h2>
+    <p class="sub">DMA 自 2024 年 3 月 7 日对守门人生效以来，欧委会作出的全部罚款决定如下，再无其他。</p>
+    <table>
+      <thead>
+        <tr><th>决定日期</th><th>公司</th><th>事由</th><th>违反条款</th><th>罚款</th><th>当前状态</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2026-07-23</td><td><b>Alphabet</b></td>
+          <td>谷歌搜索对自家垂直服务（购物、酒店、交通、体育等）自我优待</td>
+          <td><span class="tag">第 6(5) 条</span></td>
+          <td class="fine">€4.6 亿</td>
+          <td>60 天整改期内</td>
+        </tr>
+        <tr>
+          <td>2026-07-23</td><td><b>Alphabet</b></td>
+          <td>Google Play 限制开发者引导用户使用商店外更便宜渠道，佣金安排不合规</td>
+          <td><span class="tag">第 5(4) 条</span></td>
+          <td class="fine">€4.3 亿</td>
+          <td>60 天整改期内</td>
+        </tr>
+        <tr>
+          <td>2025-04-23</td><td><b>Apple</b></td>
+          <td>App Store 限制开发者向用户引导外部优惠（DMA 历史首罚）</td>
+          <td><span class="tag">第 5(4) 条</span></td>
+          <td class="fine">€5 亿</td>
+          <td class="appeal">上诉中（T-438/25）</td>
+        </tr>
+        <tr>
+          <td>2025-04-23</td><td><b>Meta</b></td>
+          <td>「付费或同意」模式未提供真正等效的低数据使用选项</td>
+          <td><span class="tag">第 5(2) 条</span></td>
+          <td class="fine">€2 亿</td>
+          <td class="appeal">上诉中（T-432/25）</td>
+        </tr>
+        <tr class="total">
+          <td colspan="4">DMA 罚款合计</td>
+          <td colspan="2">€15.9 亿</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>二、罚款决定详情</h2>
+    <p class="sub">点击「案件要点」展开详情。</p>
+    <div class="grid">
+      <div class="card">
+        <span class="badge b-penalty">罚款决定</span> <span class="badge b-closed">整改期内</span>
+        <h3>谷歌搜索自我优待案</h3>
+        <div class="meta">Alphabet · Google 搜索 · <span class="tag">第 6(5) 条</span></div>
+        <div class="amount">€4.6 亿</div>
+        <p>谷歌在搜索结果中对自家垂直服务给予更优排名与更醒目的视觉展示，构成自我优待。这是 DMA 生效以来最大单笔罚款。</p>
+        <details><summary>案件要点</summary>
+          <ul>
+            <li>违反第 6(5) 条：守门人不得在排名、索引、抓取中优待自家服务</li>
+            <li>涉及谷歌购物、酒店预订、交通出行、体育比分等垂直搜索服务</li>
+            <li class="warn">60 天内整改，逾期面临最高全球日营业额 5% 的定期罚款</li>
+          </ul>
+        </details>
+        <div class="dates">2024-03-25 启动调查 · 2026-07-23 作出罚款决定</div>
+      </div>
+
+      <div class="card">
+        <span class="badge b-penalty">罚款决定</span> <span class="badge b-closed">整改期内</span>
+        <h3>Google Play 反引导限制案</h3>
+        <div class="meta">Alphabet · Google Play · <span class="tag">第 5(4) 条</span></div>
+        <div class="amount">€4.3 亿</div>
+        <p>Play 商店限制开发者免费告知用户商店外更便宜的购买渠道，相关佣金金额与期限同样不合规。与搜索案同日宣布，合计 8.9 亿欧元。</p>
+        <details><summary>案件要点</summary>
+          <ul>
+            <li>违反第 5(4) 条：不得阻碍商业用户引导终端用户使用第三方渠道</li>
+            <li>开发者无法免费告知用户在 Play 商店外存在更便宜的购买方式</li>
+            <li class="warn">60 天内整改，逾期面临定期罚款</li>
+          </ul>
+        </details>
+        <div class="dates">2024-03-25 启动调查 · 2026-07-23 作出罚款决定</div>
+      </div>
+
+      <div class="card">
+        <span class="badge b-penalty">罚款决定</span> <span class="badge b-proc">上诉中</span>
+        <h3>Apple App Store 反引导案</h3>
+        <div class="meta">Apple · App Store · <span class="tag">第 5(4) 条</span></div>
+        <div class="amount">€5 亿</div>
+        <p>App Store 规则限制开发者引导用户至商店外渠道完成购买，是 DMA 历史上的首笔罚款。</p>
+        <details><summary>案件要点</summary>
+          <ul>
+            <li>违反第 5(4) 条：不得限制开发者免费向用户引导外部优惠</li>
+            <li>欧委会同时要求 Apple 在 60 天内移除相关限制</li>
+            <li class="appeal">Apple 已向欧盟普通法院上诉（T-438/25），审理中</li>
+          </ul>
+        </details>
+        <div class="dates">2024-03-25 启动调查 · 2025-04-23 作出罚款决定</div>
+      </div>
+
+      <div class="card">
+        <span class="badge b-penalty">罚款决定</span> <span class="badge b-proc">上诉中</span>
+        <h3>Meta「付费或同意」模式案</h3>
+        <div class="meta">Meta · Facebook · Instagram · <span class="tag">第 5(2) 条</span></div>
+        <div class="amount">€2 亿</div>
+        <p>「Consent or Pay」要求用户要么付费、要么同意数据用于个性化广告，被认定未提供真正等效的选择。</p>
+        <details><summary>案件要点</summary>
+          <ul>
+            <li>违反第 5(2) 条：不得强制用户同意跨服务数据合并</li>
+            <li>未提供使用更少个人数据的等效替代方案</li>
+            <li class="appeal">Meta 已上诉（T-432/25）；2025 年 6 月推出的新版广告模式正在评估中</li>
+          </ul>
+        </details>
+        <div class="dates">2024-03-25 启动调查 · 2025-04-23 作出罚款决定</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>三、在办程序与已结案事项（未罚款）</h2>
+    <p class="sub">这些程序尚无罚款，但可能发展为未来的处罚或新的守门人指定。</p>
+    <div class="grid">
+      <div class="card">
+        <span class="badge b-proc">在办程序</span>
+        <h3>Apple 新业务条款（核心技术费）调查</h3>
+        <div class="meta">Apple · iOS · App Store · <span class="tag">第 6(4) 条</span></div>
+        <p>调查 Apple 为替代应用商店与侧载引入的新合同条款（含核心技术费 CTF）是否实质阻碍竞争。</p>
+        <div class="dates">2024-06-24 启动调查 · 进行中</div>
+      </div>
+      <div class="card">
+        <span class="badge b-proc">在办程序</span>
+        <h3>谷歌「网站声誉滥用」政策调查</h3>
+        <div class="meta">Alphabet · Google 搜索 · <span class="tag">第 6(5) 条</span></div>
+        <p>就谷歌搜索「网站声誉滥用」政策对新闻出版商等第三方网站排名的影响启动程序。</p>
+        <div class="dates">2025 年 11 月启动 · 进行中</div>
+      </div>
+      <div class="card">
+        <span class="badge b-proc">市场调查</span>
+        <h3>云计算服务市场调查</h3>
+        <div class="meta">AWS · Azure · <span class="tag">市场调查</span></div>
+        <p>评估云计算领域竞争状况，包括 AWS 与 Azure 是否应被指定为守门人。市场调查非处罚程序，但可能导致新的指定。</p>
+        <div class="dates">2025 年 11 月启动 · 进行中</div>
+      </div>
+      <div class="card">
+        <span class="badge b-closed">已结案（细化决定）</span>
+        <h3>Apple 互操作性细化决定</h3>
+        <div class="meta">Apple · iOS · <span class="tag">第 6(7) 条</span></div>
+        <p>通过两项细化决定明确 iOS 连接功能开放范围与开发者互操作请求处理流程，属义务执行标准的明确，非处罚。</p>
+        <div class="dates">2024-09-19 启动 · 2025-03-19 作出决定</div>
+      </div>
+      <div class="card">
+        <span class="badge b-closed">已结案（未罚款）</span>
+        <h3>Apple 选择界面与应用卸载调查</h3>
+        <div class="meta">Apple · iOS · Safari · App Store · <span class="tag">第 6(3) 条</span></div>
+        <p>针对默认浏览器选择界面、预装应用卸载等义务的调查，在 Apple 作出合规调整后结案，未予罚款。</p>
+        <div class="dates">2024-03-25 启动 · 2025 年结案</div>
+      </div>
+      <div class="card">
+        <span class="badge b-related">关联案件（非 DMA）</span>
+        <h3>谷歌广告技术（AdTech）反垄断案</h3>
+        <div class="meta">Alphabet · 广告技术 · <span class="tag">第 102 条 TFEU</span></div>
+        <div class="amount amber">€29.5 亿</div>
+        <p>依据传统竞争法（滥用市场支配地位），<b>不是 DMA 案件</b>，但常被混淆。列入仅为便于区分，不计入 DMA 罚款统计。</p>
+        <div class="dates">2025-09-05 作出罚款决定</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>四、已指定守门人（7 家）</h2>
+    <p class="sub">截至 2026 年 7 月，其中 3 家已被处以 DMA 罚款。</p>
+    <div class="gk">
+      <div class="g fined"><b>Alphabet</b><span>已罚 €8.9 亿</span></div>
+      <div class="g fined"><b>Apple</b><span>已罚 €5 亿</span></div>
+      <div class="g fined"><b>Meta</b><span>已罚 €2 亿</span></div>
+      <div class="g"><b>Amazon</b><span>未被处罚</span></div>
+      <div class="g"><b>Booking</b><span>未被处罚</span></div>
+      <div class="g"><b>ByteDance</b><span>未被处罚</span></div>
+      <div class="g"><b>Microsoft</b><span>未被处罚</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>五、DMA 处罚规则速览</h2>
+    <p class="sub">&nbsp;</p>
+    <div class="rules">
+      <div><b>不合规罚款</b><br/>最高可达守门人全球总营业额的 10%；重复违规最高 20%。</div>
+      <div><b>定期罚款</b><br/>逾期未整改，最高为全球日均营业额的 5%，按日计罚。</div>
+      <div><b>其他救济</b><br/>可施加行为性乃至结构性救济，包括要求剥离部分业务。</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>六、官方数据来源</h2>
+    <p class="sub">数据以以下官方渠道原文为准。</p>
+    <div class="sources">
+      <a href="https://digital-markets-act.ec.europa.eu/index_en" target="_blank" rel="noreferrer">DMA 官方门户 ↗<span>守门人指定、义务清单、年度报告</span></a>
+      <a href="https://digital-markets-act-cases.ec.europa.eu/" target="_blank" rel="noreferrer">DMA 案件登记库 ↗<span>不合规决定与合规报告原文</span></a>
+      <a href="https://competition-cases.ec.europa.eu/" target="_blank" rel="noreferrer">竞争案件检索系统 ↗<span>按案件编号检索决定全文</span></a>
+      <a href="https://ec.europa.eu/commission/presscorner/home/en" target="_blank" rel="noreferrer">欧委会 Press Corner ↗<span>执法新闻稿首发渠道</span></a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">DMA 执法追踪器（静态速览版） · 数据截至 2026-07-23 · 仅供研究参考，不构成法律意见，请以欧盟委员会官方原文为准</div>
+</footer>
+
+</body>
+</html>

@@ -8,6 +8,7 @@
 """
 
 import json
+import os
 import re
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -25,6 +26,14 @@ KEYWORD_PATTERNS = [
     re.compile(r"\bDMA\b"),
     re.compile(r"gatekeeper", re.I),
     re.compile(r"core platform service", re.I),
+]
+
+PENALTY_PATTERNS = [
+    re.compile(r"\bfines?\b", re.I),
+    re.compile(r"\bfined\b", re.I),
+    re.compile(r"penalt", re.I),
+    re.compile(r"non-compliance decision", re.I),
+    re.compile(r"罚款"),
 ]
 
 
@@ -57,26 +66,70 @@ def parse_items(xml_bytes: bytes) -> list[dict]:
     return items
 
 
+def merge_items(existing_items: list[dict], incoming_items: list[dict]) -> list[dict]:
+    """Merge unseen RSS items into the existing bounded, date-sorted list."""
+    known_links = {item.get("link") for item in existing_items}
+    new_items = []
+    for item in incoming_items:
+        link = item.get("link")
+        if not link or link in known_links:
+            continue
+        known_links.add(link)
+        new_items.append(item)
+
+    merged = new_items + list(existing_items)
+    merged.sort(key=lambda item: item.get("date", ""), reverse=True)
+    return merged[:MAX_ITEMS]
+
+
+def is_penalty_item(item: dict) -> bool:
+    text = f"{item.get('title', '')} {item.get('summary', '')}"
+    return any(pattern.search(text) for pattern in PENALTY_PATTERNS)
+
+
+def write_github_outputs(new_items: list[dict]) -> None:
+    """Expose stable monitor metadata to GitHub Actions when running there."""
+    output_path = os.environ.get("GITHUB_OUTPUT")
+    if not output_path:
+        return
+
+    penalty_count = sum(1 for item in new_items if is_penalty_item(item))
+    with Path(output_path).open("a", encoding="utf-8") as output:
+        output.write(f"changed={'true' if new_items else 'false'}\n")
+        output.write(f"new_count={len(new_items)}\n")
+        output.write(f"penalty_count={penalty_count}\n")
+        output.write("new_items_json<<DMA_ITEMS\n")
+        output.write(json.dumps(new_items, ensure_ascii=False))
+        output.write("\nDMA_ITEMS\n")
+
+
 def main() -> None:
     existing: dict = {"items": []}
     if OUTPUT.exists():
         existing = json.loads(OUTPUT.read_text(encoding="utf-8"))
 
-    known_links = {it["link"] for it in existing.get("items", [])}
-    new_items = [it for it in parse_items(fetch_rss(RSS_URL)) if it["link"] not in known_links]
+    existing_items = existing.get("items", [])
+    incoming_items = parse_items(fetch_rss(RSS_URL))
+    existing_links = {item.get("link") for item in existing_items}
+    new_items = [item for item in incoming_items if item.get("link") not in existing_links]
+    merged = merge_items(existing_items, incoming_items)
+    write_github_outputs(new_items)
 
-    merged = new_items + existing.get("items", [])
-    merged.sort(key=lambda x: x.get("date", ""), reverse=True)
-    merged = merged[:MAX_ITEMS]
+    # Keep the data file stable when the monitor finds nothing new. This avoids
+    # an empty daily commit caused only by a refreshed timestamp.
+    if not new_items:
+        print(f"新增 0 条，累计 {len(merged)} 条")
+        return
 
     payload = {
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "source": RSS_URL,
+        "source": existing.get("source", RSS_URL),
         "items": merged,
     }
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"新增 {len(new_items)} 条，累计 {len(merged)} 条")
+    penalty_count = sum(1 for item in new_items if is_penalty_item(item))
+    print(f"新增 {len(new_items)} 条（其中处罚 {penalty_count} 条），累计 {len(merged)} 条")
 
 
 if __name__ == "__main__":

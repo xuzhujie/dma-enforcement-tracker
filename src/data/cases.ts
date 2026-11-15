@@ -1,5 +1,7 @@
 // DMA 执法案件数据
-// 数据截至 2026-07-23，来源：欧盟委员会 DMA 官方门户、DMA 案件登记库、Press Corner
+// 数据核验截至 2026-11-16，来源：欧盟委员会 DMA 官方门户、DMA 案件登记库、Press Corner
+
+export const DATA_AS_OF = '2026-11-16'
 
 export type CaseCategory = 'penalty' | 'proceeding' | 'closed' | 'related'
 
@@ -38,24 +40,24 @@ export const cases: DmaCase[] = [
     cps: 'Google 搜索',
     articles: ['第 6(5) 条'],
     category: 'penalty',
-    stage: '已罚款（整改期内）',
+    stage: '已罚款（整改状态待核）',
     fine: 460,
     openedDate: '2024-03-25',
     openedLabel: '启动不合规调查',
     decisionDate: '2026-07-23',
     decisionLabel: '作出罚款决定',
-    deadline: '60 天内整改，逾期面临最高全球日营业额 5% 的定期罚款',
+    deadline: '决定通知后 60 天内整改；当前合规状态待官方更新',
     summary:
       '谷歌在搜索结果中对自家垂直服务（购物、酒店、交通、体育等）给予更优排名和更醒目的视觉展示，构成自我优待。',
     keyPoints: [
       '违反 DMA 第 6(5) 条：守门人不得在排名、索引、抓取中优待自家服务',
       '涉及谷歌购物、酒店预订、交通出行、体育比分等垂直搜索服务',
       '罚款 4.6 亿欧元，为 DMA 生效以来最大单笔罚款',
-      '谷歌须在 60 天内停止违规行为，否则将被处以定期罚款',
+      '欧委会要求在决定通知后 60 天内停止违规行为；当前合规状态待官方更新',
     ],
     sources: [
-      { label: '欧委会新闻稿', url: 'https://ec.europa.eu/commission/presscorner/home/en' },
-      { label: 'DMA 案件登记库', url: 'https://digital-markets-act-cases.ec.europa.eu/' },
+      { label: '欧委会新闻稿（Google €890m）', url: 'https://digital-strategy.ec.europa.eu/en/news/commission-fines-google-eu890-million-breaches-digital-markets-act' },
+      { label: 'DMA 案件（Google Article 6(11)）', url: 'https://digital-markets-act-cases.ec.europa.eu/cases/DMA.100209' },
     ],
   },
   {
@@ -65,13 +67,13 @@ export const cases: DmaCase[] = [
     cps: 'Google Play',
     articles: ['第 5(4) 条'],
     category: 'penalty',
-    stage: '已罚款（整改期内）',
+    stage: '已罚款（整改状态待核）',
     fine: 430,
     openedDate: '2024-03-25',
     openedLabel: '启动不合规调查',
     decisionDate: '2026-07-23',
     decisionLabel: '作出罚款决定',
-    deadline: '60 天内整改，逾期面临最高全球日营业额 5% 的定期罚款',
+    deadline: '决定通知后 60 天内整改；当前合规状态待官方更新',
     summary:
       'Google Play 限制开发者免费向用户告知商店外更便宜的购买渠道，且相关佣金的金额与期限超出合规范围。',
     keyPoints: [
@@ -81,7 +83,7 @@ export const cases: DmaCase[] = [
       '罚款 4.3 亿欧元，与搜索案同日宣布，合计 8.9 亿欧元',
     ],
     sources: [
-      { label: '欧委会新闻稿', url: 'https://ec.europa.eu/commission/presscorner/home/en' },
+      { label: '欧委会新闻稿（Google €890m）', url: 'https://digital-strategy.ec.europa.eu/en/news/commission-fines-google-eu890-million-breaches-digital-markets-act' },
       { label: 'DMA 案件登记库', url: 'https://digital-markets-act-cases.ec.europa.eu/' },
     ],
   },
@@ -108,7 +110,7 @@ export const cases: DmaCase[] = [
       'Apple 已上诉至欧盟普通法院，案件尚在审理',
     ],
     sources: [
-      { label: '欧委会新闻稿', url: 'https://ec.europa.eu/commission/presscorner/home/en' },
+      { label: '欧委会新闻稿（Apple 与 Meta）', url: 'https://digital-markets-act.ec.europa.eu/commission-finds-apple-and-meta-breach-digital-markets-act-2025-04-23_en' },
       { label: 'DMA 案件登记库', url: 'https://digital-markets-act-cases.ec.europa.eu/' },
     ],
   },
@@ -125,7 +127,7 @@ export const cases: DmaCase[] = [
     openedLabel: '启动不合规调查',
     decisionDate: '2025-04-23',
     decisionLabel: '作出罚款决定',
-    appeal: '已向欧盟普通法院提起上诉（案件号 T-432/25），审理中',
+    appeal: '已向欧盟普通法院提起上诉（案件号 T-435/25），审理中',
     summary:
       'Meta 的「Consent or Pay」模式要求用户要么付费、要么同意个人数据被用于个性化广告，被认定未提供真正等效的选择。',
     keyPoints: [
@@ -135,7 +137,7 @@ export const cases: DmaCase[] = [
       '2025 年 6 月 Meta 推出新版广告模式，欧委会正在评估其合规性',
     ],
     sources: [
-      { label: '欧委会新闻稿', url: 'https://ec.europa.eu/commission/presscorner/home/en' },
+      { label: '欧委会新闻稿（Apple 与 Meta）', url: 'https://digital-markets-act.ec.europa.eu/commission-finds-apple-and-meta-breach-digital-markets-act-2025-04-23_en' },
       { label: 'DMA 案件登记库', url: 'https://digital-markets-act-cases.ec.europa.eu/' },
     ],
   },
@@ -158,6 +160,7 @@ export const cases: DmaCase[] = [
       '调查仍在进行，尚未作出罚款决定',
     ],
     sources: [
+      { label: '欧委会新闻稿（Apple 新业务条款）', url: 'https://digital-markets-act.ec.europa.eu/commission-sends-preliminary-findings-apple-and-opens-additional-non-compliance-investigation-2024-06-24_en' },
       { label: 'DMA 案件登记库', url: 'https://digital-markets-act-cases.ec.europa.eu/' },
     ],
   },
@@ -170,7 +173,7 @@ export const cases: DmaCase[] = [
     category: 'proceeding',
     stage: '调查中',
     fine: null,
-    openedDate: '2025-11-01',
+    openedDate: '2025-11-13',
     openedLabel: '启动调查',
     summary:
       '欧委会就谷歌搜索的「网站声誉滥用」（site reputation abuse）政策对新闻出版商等第三方网站排名的影响启动程序。',
@@ -180,6 +183,7 @@ export const cases: DmaCase[] = [
       '程序进行中，尚未作出决定',
     ],
     sources: [
+      { label: '欧委会新闻稿（网站声誉滥用）', url: 'https://digital-markets-act.ec.europa.eu/commission-opens-investigation-potential-digital-markets-act-breach-google-demoting-media-publishers-2025-11-13_en' },
       { label: 'DMA 案件登记库', url: 'https://digital-markets-act-cases.ec.europa.eu/' },
     ],
   },
@@ -192,7 +196,7 @@ export const cases: DmaCase[] = [
     category: 'proceeding',
     stage: '调查中',
     fine: null,
-    openedDate: '2025-11-01',
+    openedDate: '2025-11-18',
     openedLabel: '启动市场调查',
     summary:
       '欧委会启动 DMA 项下市场调查，评估云计算领域的竞争状况，包括 AWS 与 Azure 是否应被指定为守门人。',
@@ -202,7 +206,8 @@ export const cases: DmaCase[] = [
       '市场调查非处罚程序，但可能导致新的守门人指定',
     ],
     sources: [
-      { label: 'DMA 官方门户', url: 'https://digital-markets-act.ec.europa.eu/index_en' },
+      { label: '欧委会新闻稿（云计算市场调查）', url: 'https://digital-markets-act.ec.europa.eu/commission-launches-market-investigations-cloud-computing-services-under-digital-markets-act-2025-11-18_en' },
+      { label: '欧委会初步立场（AWS 与 Azure）', url: 'https://digital-markets-act.ec.europa.eu/commission-reaches-preliminary-position-amazons-and-microsofts-market-leading-cloud-services-should-2026-06-25_en' },
     ],
   },
   {
@@ -216,8 +221,8 @@ export const cases: DmaCase[] = [
     fine: null,
     openedDate: '2024-09-19',
     openedLabel: '启动细化程序',
-    decisionDate: '2025-03-19',
-    decisionLabel: '作出两项细化决定',
+    decisionDate: '2025-08-04',
+    decisionLabel: '作出后续细化决定',
     summary:
       '欧委会通过细化程序明确 Apple 在 iOS 互操作性方面的具体义务，涉及连接功能开放与开发者互操作请求流程。',
     keyPoints: [
@@ -226,7 +231,7 @@ export const cases: DmaCase[] = [
       '第二项决定规范 Apple 处理开发者互操作请求的流程与时限',
     ],
     sources: [
-      { label: 'DMA 案件登记库', url: 'https://digital-markets-act-cases.ec.europa.eu/' },
+      { label: 'DMA 案件（Apple 互操作性）', url: 'https://digital-markets-act-cases.ec.europa.eu/cases/DMA.100203' },
     ],
   },
   {

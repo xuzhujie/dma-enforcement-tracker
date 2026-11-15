@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import type { DmaCase } from '../src/data/cases.ts'
+import { DATA_AS_OF, type DmaCase } from '../src/data/cases.ts'
 import { getDashboardMetrics } from '../src/data/dashboardMetrics.ts'
+
+test('exposes the catalogue cutoff date for shared public copy', () => {
+  assert.equal(DATA_AS_OF, '2026-11-16')
+})
 
 function makeCase(overrides: Partial<DmaCase> = {}): DmaCase {
   return {

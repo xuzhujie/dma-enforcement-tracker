@@ -1,6 +1,8 @@
 // DMA 执法案件数据
 // 数据核验截至 2026-11-16，来源：欧盟委员会 DMA 官方门户、DMA 案件登记库、Press Corner
 
+export const DATA_AS_OF = '2026-11-16'
+
 export type CaseCategory = 'penalty' | 'proceeding' | 'closed' | 'related'
 
 export interface DmaCase {

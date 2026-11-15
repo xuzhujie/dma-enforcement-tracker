@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   cases, gatekeepers, officialSources,
-  CATEGORY_META, DMA_TOTAL_FINE, formatFine, type CaseCategory,
+  CATEGORY_META, DATA_AS_OF, formatDate, formatFine, type CaseCategory,
 } from '@/data/cases'
+import { getDashboardMetrics } from '@/data/dashboardMetrics'
 import CaseCard from '@/sections/CaseCard'
+import DashboardOverview from '@/sections/DashboardOverview'
 import Timeline from '@/sections/Timeline'
 import Charts from '@/sections/Charts'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
-import { Landmark, LayoutGrid, LineChart, ListFilter, ShieldCheck } from 'lucide-react'
+import { Landmark, LayoutDashboard, LayoutGrid, LineChart, ListFilter, ShieldCheck } from 'lucide-react'
 
 const ALL = '__all__'
 const companies = [...new Set(cases.map((c) => c.gatekeeper))]
@@ -51,15 +53,13 @@ export default function Home() {
     [category, company, article],
   )
 
-  const penaltyCount = cases.filter((c) => c.category === 'penalty').length
-  const finedCompanies = new Set(cases.filter((c) => c.category === 'penalty').map((c) => c.gatekeeper)).size
-  const proceedingCount = cases.filter((c) => c.category === 'proceeding').length
+  const dashboardMetrics = useMemo(() => getDashboardMetrics(cases), [])
 
   const stats = [
-    { label: 'DMA 累计罚款', value: formatFine(DMA_TOTAL_FINE), sub: '不含关联反垄断案件' },
-    { label: '罚款决定', value: `${penaltyCount} 项`, sub: '针对 3 家守门人' },
-    { label: '被罚守门人', value: `${finedCompanies} 家`, sub: '共指定 7 家守门人' },
-    { label: '在办程序', value: `${proceedingCount} 项`, sub: '含市场调查' },
+    { label: 'DMA 累计罚款', value: formatFine(dashboardMetrics.dmaFineTotal), sub: '不含关联反垄断案件' },
+    { label: '罚款决定', value: `${dashboardMetrics.penaltyCount} 项`, sub: `针对 ${dashboardMetrics.finedCompanyCount} 家守门人` },
+    { label: '被罚守门人', value: `${dashboardMetrics.finedCompanyCount} 家`, sub: '共指定 7 家守门人' },
+    { label: '在办程序', value: `${dashboardMetrics.proceedingCount} 项`, sub: '含市场调查' },
   ]
 
   return (
@@ -74,7 +74,7 @@ export default function Home() {
           <h1 className="mt-3 text-4xl font-bold tracking-tight">DMA 执法追踪器</h1>
           <p className="mt-3 max-w-2xl text-blue-100">
             汇总欧盟委员会依据《数字市场法》作出的全部罚款决定、在办程序与关联案件，
-            数据截至 2026 年 7 月 23 日，以官方原文为准。
+            数据核验截至 {formatDate(DATA_AS_OF)}，以官方原文为准。
           </p>
           <div className="mt-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
             {stats.map((s) => (
@@ -143,12 +143,17 @@ export default function Home() {
           )}
         </div>
 
-        <Tabs defaultValue="cards">
+        <Tabs defaultValue="dashboard">
           <TabsList className="mb-6 bg-white">
+            <TabsTrigger value="dashboard" className="gap-1.5"><LayoutDashboard className="h-4 w-4" />驾驶舱</TabsTrigger>
             <TabsTrigger value="cards" className="gap-1.5"><LayoutGrid className="h-4 w-4" />案件总览</TabsTrigger>
             <TabsTrigger value="timeline" className="gap-1.5"><ShieldCheck className="h-4 w-4" />时间线</TabsTrigger>
             <TabsTrigger value="charts" className="gap-1.5"><LineChart className="h-4 w-4" />统计图表</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="dashboard">
+            <DashboardOverview metrics={dashboardMetrics} lastStoredUpdate={updates?.updated_at} />
+          </TabsContent>
 
           <TabsContent value="cards">
             {filtered.length === 0 ? (
@@ -167,7 +172,7 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="charts">
-            <Charts />
+            <Charts metrics={dashboardMetrics} />
           </TabsContent>
         </Tabs>
 
@@ -177,7 +182,7 @@ export default function Home() {
             <h2 className="text-xl font-bold text-slate-900">自动监测动态</h2>
             <span className="text-xs text-slate-400">
               来源：欧委会 Press Corner 官方 RSS · GitHub Actions 每日自动更新
-              {updates?.updated_at && ` · 最近更新 ${updates.updated_at.slice(0, 10)}`}
+              {updates?.updated_at && ` · 动态数据最后更新 ${updates.updated_at.slice(0, 10)}`}
             </span>
           </div>
           <div className="mt-5 rounded-xl border border-slate-200 bg-white">
@@ -209,7 +214,7 @@ export default function Home() {
         {/* Gatekeepers */}
         <section className="mt-14">
           <h2 className="text-xl font-bold text-slate-900">已指定守门人（7 家）</h2>
-          <p className="mt-1 text-sm text-slate-500">截至 2026 年 7 月，其中 3 家已被处以 DMA 罚款。</p>
+          <p className="mt-1 text-sm text-slate-500">截至 {formatDate(DATA_AS_OF)}，其中 {dashboardMetrics.finedCompanyCount} 家已被处以 DMA 罚款。</p>
           <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
             {gatekeepers.map((g) => (
               <Card key={g.name} className={`border ${g.fined ? 'border-red-200 bg-red-50/50' : 'border-slate-200 bg-white'}`}>
@@ -256,7 +261,7 @@ export default function Home() {
 
       <footer className="border-t border-slate-200 bg-white py-6">
         <div className="mx-auto max-w-6xl px-6 text-xs text-slate-400">
-          DMA 执法追踪器 · 数据截至 2026-07-23 · 仅供研究参考，不构成法律意见，请以欧盟委员会官方原文为准
+          DMA 执法追踪器 · 数据核验截至 {DATA_AS_OF} · 仅供研究参考，不构成法律意见，请以欧盟委员会官方原文为准
         </div>
       </footer>
     </div>

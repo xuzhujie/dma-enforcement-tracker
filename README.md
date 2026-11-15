@@ -5,7 +5,7 @@
 ## 功能
 
 - **案件总览**：全部 DMA 罚款决定（Apple €5 亿、Meta €2 亿、Alphabet €4.6 亿 + €4.3 亿）、在办程序、已结案事项与关联反垄断案件
-- **筛选 / 时间线 / 统计图表**：按类型、公司、条款筛选；执法里程碑时间线；罚款金额图表
+- **驾驶舱 / 筛选 / 时间线 / 统计图表**：待关注案件、数据新鲜度、累计罚款趋势、守门人和条款拆分；也可按类型、公司、条款筛选并查看执法里程碑
 - **自动监测动态**：GitHub Actions 每天抓取欧委会 Press Corner 官方 RSS，筛出 DMA 相关新闻；有新内容才提交更新
 - **静态速览页**：`/static/` 路径下的纯 HTML 单页，适合打印与分享
 
@@ -15,6 +15,7 @@
 
 - `.github/workflows/monitor.yml`：每天 UTC 06:17（北京时间 14:17）运行，也支持手动触发；无新动态时不产生提交
 - `.github/workflows/deploy.yml`：推送到 `main` 后执行 `npm ci`、Lint、构建并部署到 GitHub Pages
+- 默认页面入口为“驾驶舱”；案件卡片、时间线和完整统计图表仍保留在同一页面
 - 首次使用时，在仓库 Settings → Pages → Source 选择 **GitHub Actions**
 
 每次监测运行都会写入 GitHub Actions Summary。GitHub 自带的失败运行通知继续有效；默认不向第三方发送消息。
@@ -41,6 +42,7 @@
 ```bash
 npm install
 npm run dev
+npm test
 npm run lint
 npm run build   # 产物在 dist/
 ```

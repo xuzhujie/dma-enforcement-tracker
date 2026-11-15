@@ -55,7 +55,7 @@ export default function DashboardOverview({ metrics, lastStoredUpdate }: Dashboa
             ) : metrics.attention.map((item) => (
               <div key={item.id} className="rounded-lg border border-slate-100 bg-slate-50/70 p-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline" className={ATTENTION_STYLES[item.reason]}>{item.reason}</Badge>
+                  {item.reasons.map((reason) => <Badge key={reason} variant="outline" className={ATTENTION_STYLES[reason]}>{reason}</Badge>)}
                   <span className="text-xs text-slate-400">{item.gatekeeper}</span>
                   {item.fine != null && <span className="ml-auto text-sm font-semibold text-red-600">{formatFine(item.fine)}</span>}
                 </div>

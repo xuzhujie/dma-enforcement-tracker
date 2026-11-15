@@ -1,4 +1,3 @@
-import { cases, type DmaCase } from '@/data/cases'
 import type { DashboardMetrics } from '@/data/dashboardMetrics'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -12,19 +11,7 @@ const COMPANY_COLORS: Record<string, string> = {
   Meta: '#0866FF',
 }
 
-const CATEGORY_COLORS: Record<DmaCase['category'], string> = {
-  penalty: '#dc2626',
-  proceeding: '#2563eb',
-  closed: '#64748b',
-  related: '#d97706',
-}
-
 export default function Charts({ metrics }: { metrics: DashboardMetrics }) {
-  const penaltyCases = cases.filter((item) => item.category === 'penalty')
-  const fineByCase = penaltyCases
-    .map((item) => ({ name: item.title.replace('案', ''), company: item.gatekeeper, fine: item.fine ?? 0 }))
-    .sort((left, right) => right.fine - left.fine)
-
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Card className="border-slate-200">
@@ -95,7 +82,7 @@ export default function Charts({ metrics }: { metrics: DashboardMetrics }) {
         </CardHeader>
         <CardContent className="h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={fineByCase} layout="vertical" margin={{ left: 10, right: 30, top: 10 }}>
+            <BarChart data={metrics.finesByCase.map((item) => ({ ...item, name: item.title.replace('案', '') }))} layout="vertical" margin={{ left: 10, right: 30, top: 10 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
               <XAxis type="number" tick={{ fontSize: 12, fill: '#64748b' }} />
               <YAxis type="category" dataKey="name" width={145} tick={{ fontSize: 12, fill: '#334155' }} />
@@ -104,7 +91,7 @@ export default function Charts({ metrics }: { metrics: DashboardMetrics }) {
                 contentStyle={{ fontSize: 13, borderRadius: 8, border: '1px solid #e2e8f0' }}
               />
               <Bar dataKey="fine" radius={[0, 4, 4, 0]}>
-                {fineByCase.map((item) => <Cell key={item.name} fill={CATEGORY_COLORS.penalty} />)}
+                {metrics.finesByCase.map((item) => <Cell key={item.id} fill="#dc2626" />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>

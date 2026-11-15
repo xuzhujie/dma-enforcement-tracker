@@ -42,6 +42,10 @@ test('excludes related fines and builds cumulative decision-year totals', () => 
     { company: 'Apple', fine: 500, cases: 1 },
     { company: 'Alphabet', fine: 430, cases: 1 },
   ])
+  assert.deepEqual(metrics.finesByCase, [
+    { id: 'apple', title: '测试案件', company: 'Apple', fine: 500 },
+    { id: 'google', title: '测试案件', company: 'Alphabet', fine: 430 },
+  ])
 })
 
 test('counts a multi-article case once under each applicable article', () => {
@@ -66,11 +70,27 @@ test('flags appeals, pending verification, and active proceedings for attention'
   assert.equal(metrics.appealCount, 1)
   assert.equal(metrics.pendingVerificationCount, 1)
   assert.equal(metrics.proceedingCount, 1)
-  assert.deepEqual(metrics.attention.map((item) => item.reason), [
+  assert.deepEqual(metrics.attention.map((item) => item.reasons[0]), [
     '上诉中',
     '整改状态待核',
     '在办程序',
   ])
+})
+
+test('keeps attention counters aligned for a case with multiple attention flags', () => {
+  const metrics = getDashboardMetrics([
+    makeCase({
+      id: 'multi-flag',
+      category: 'proceeding',
+      fine: null,
+      stage: '整改状态待核',
+      appeal: '案件号 T-2/25',
+    }),
+  ])
+
+  assert.equal(metrics.appealCount, 1)
+  assert.equal(metrics.pendingVerificationCount, 1)
+  assert.deepEqual(metrics.attention[0]?.reasons, ['上诉中', '整改状态待核', '在办程序'])
 })
 
 test('returns stable empty metric arrays for an empty catalogue', () => {
@@ -85,6 +105,7 @@ test('returns stable empty metric arrays for an empty catalogue', () => {
     pendingVerificationCount: 0,
     finesByYear: [],
     finesByCompany: [],
+    finesByCase: [],
     casesByArticle: [],
     categoryCounts: [],
     attention: [],

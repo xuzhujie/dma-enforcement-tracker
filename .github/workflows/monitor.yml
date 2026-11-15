@@ -1,0 +1,96 @@
+name: DMA 动态监测
+
+on:
+  schedule:
+    # 案例数量有限，每天 UTC 06:17 运行（北京时间 14:17）
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dma-monitor
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 抓取 Press Corner 并更新动态数据
+        id: monitor
+        run: python scripts/check_updates.py
+
+      - name: 写入运行摘要
+        if: always()
+        env:
+          NEW_ITEMS_JSON: ${{ steps.monitor.outputs.new_items_json }}
+          NEW_COUNT: ${{ steps.monitor.outputs.new_count || '0' }}
+          PENALTY_COUNT: ${{ steps.monitor.outputs.penalty_count || '0' }}
+        run: |
+          {
+            echo "## DMA 动态监测"
+            echo "- 运行频率：每天 UTC 06:17（北京时间 14:17）"
+            echo "- 新增动态：${NEW_COUNT} 条"
+            echo "- 新增处罚相关动态：${PENALTY_COUNT} 条"
+            if [ -n "${NEW_ITEMS_JSON:-}" ]; then
+              NEW_ITEMS_JSON="$NEW_ITEMS_JSON" python3 - <<'PY'
+          import json
+          import os
+
+          for item in json.loads(os.environ.get('NEW_ITEMS_JSON', '[]')):
+              title = item.get('title', '未命名动态').replace('\n', ' ').strip()
+              link = item.get('link', '').strip()
+              print(f"- {title} ({link})" if link else f"- {title}")
+          PY
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 提交更新
+        if: steps.monitor.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/updates.json
+          if git diff --cached --quiet; then
+            echo "无新动态，跳过提交"
+          else
+            git commit -m "chore: 自动更新 DMA 动态监测数据"
+            git push
+          fi
+
+      - name: 可选：发送变更通知
+        if: steps.monitor.outputs.changed == 'true' && env.WEBHOOK_URL != ''
+        continue-on-error: true
+        env:
+          WEBHOOK_URL: ${{ secrets.NOTIFY_WEBHOOK_URL }}
+          WEBHOOK_KIND: ${{ vars.NOTIFY_WEBHOOK_KIND }}
+          NEW_COUNT: ${{ steps.monitor.outputs.new_count || '0' }}
+          PENALTY_COUNT: ${{ steps.monitor.outputs.penalty_count || '0' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' | curl --fail --silent --show-error --retry 2 --data-binary @- -H 'Content-Type: application/json' "$WEBHOOK_URL"
+          import json
+          import os
+
+          message = (
+              f"DMA 监测发现 {os.environ.get('NEW_COUNT', '0')} 条新动态，"
+              f"其中处罚相关 {os.environ.get('PENALTY_COUNT', '0')} 条。"
+              f"\n运行详情：{os.environ.get('RUN_URL', '')}"
+          )
+          kind = os.environ.get('WEBHOOK_KIND', '').strip().lower() or 'generic'
+          if kind == 'discord':
+              payload = {'content': message}
+          elif kind == 'feishu':
+              payload = {'msg_type': 'text', 'content': {'text': message}}
+          else:
+              payload = {'text': message}
+          print(json.dumps(payload, ensure_ascii=False))
+          PY

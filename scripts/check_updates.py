@@ -10,6 +10,8 @@
 import json
 import os
 import re
+import time
+import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
@@ -19,6 +21,8 @@ from pathlib import Path
 RSS_URL = "https://ec.europa.eu/commission/presscorner/api/rss?language=en"
 OUTPUT = Path(__file__).resolve().parent.parent / "public" / "data" / "updates.json"
 MAX_ITEMS = 50
+RSS_FETCH_ATTEMPTS = 3
+RSS_FETCH_TIMEOUT = 30
 
 # DMA 相关关键词（标题或正文命中其一即收录）
 KEYWORD_PATTERNS = [
@@ -39,8 +43,21 @@ PENALTY_PATTERNS = [
 
 def fetch_rss(url: str) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": "dma-tracker-bot/1.0"})
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return resp.read()
+    for attempt in range(RSS_FETCH_ATTEMPTS):
+        try:
+            with urllib.request.urlopen(req, timeout=RSS_FETCH_TIMEOUT) as resp:
+                return resp.read()
+        except (TimeoutError, urllib.error.URLError) as error:
+            if attempt == RSS_FETCH_ATTEMPTS - 1:
+                raise
+            delay = 2 ** (attempt + 1)
+            print(
+                f"RSS 获取失败（第 {attempt + 1}/{RSS_FETCH_ATTEMPTS} 次）："
+                f"{error}；{delay} 秒后重试"
+            )
+            time.sleep(delay)
+
+    raise RuntimeError("RSS 获取重试逻辑异常结束")
 
 
 def parse_items(xml_bytes: bytes) -> list[dict]:

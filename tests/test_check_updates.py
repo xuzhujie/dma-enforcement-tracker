@@ -1,4 +1,5 @@
 import json
+import io
 import os
 import tempfile
 import unittest
@@ -9,6 +10,18 @@ from scripts import check_updates
 
 
 class CheckUpdatesTests(unittest.TestCase):
+    def test_fetch_rss_retries_a_transient_timeout(self):
+        with patch.object(
+            check_updates.urllib.request,
+            "urlopen",
+            side_effect=[TimeoutError("temporary timeout"), io.BytesIO(b"<rss />")],
+        ) as urlopen, patch("time.sleep") as sleep:
+            payload = check_updates.fetch_rss("https://example.test/rss")
+
+        self.assertEqual(payload, b"<rss />")
+        self.assertEqual(urlopen.call_count, 2)
+        sleep.assert_called_once_with(2)
+
     def test_merge_items_deduplicates_links_and_sorts_new_items_first(self):
         self.assertTrue(callable(getattr(check_updates, "merge_items", None)))
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import {
   cases, gatekeepers, officialSources,
   CATEGORY_META, DATA_AS_OF, formatDate, formatFine, type CaseCategory,
@@ -7,13 +7,13 @@ import { getDashboardMetrics } from '@/data/dashboardMetrics'
 import CaseCard from '@/sections/CaseCard'
 import DashboardOverview from '@/sections/DashboardOverview'
 import Timeline from '@/sections/Timeline'
-import Charts from '@/sections/Charts'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
 import { Landmark, LayoutDashboard, LayoutGrid, LineChart, ListFilter, ShieldCheck } from 'lucide-react'
 
 const ALL = '__all__'
+const Charts = lazy(() => import('@/sections/Charts'))
 const companies = [...new Set(cases.map((c) => c.gatekeeper))]
 const articles = [...new Set(cases.flatMap((c) => c.articles))]
 
@@ -172,7 +172,15 @@ export default function Home() {
           </TabsContent>
 
           <TabsContent value="charts">
-            <Charts metrics={dashboardMetrics} />
+            <Suspense
+              fallback={
+                <div className="flex min-h-80 items-center justify-center rounded-xl border border-slate-200 bg-white text-sm text-slate-400">
+                  正在加载统计图表…
+                </div>
+              }
+            >
+              <Charts metrics={dashboardMetrics} />
+            </Suspense>
           </TabsContent>
         </Tabs>
 

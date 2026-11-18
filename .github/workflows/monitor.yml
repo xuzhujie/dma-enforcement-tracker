@@ -33,10 +33,14 @@ jobs:
           NEW_ITEMS_JSON: ${{ steps.monitor.outputs.new_items_json }}
           NEW_COUNT: ${{ steps.monitor.outputs.new_count || '0' }}
           PENALTY_COUNT: ${{ steps.monitor.outputs.penalty_count || '0' }}
+          SOURCE_USED: ${{ steps.monitor.outputs.source_used || '未成功' }}
+          LAST_SUCCESSFUL_FETCH: ${{ steps.monitor.outputs.last_successful_fetch || '未成功' }}
         run: |
           {
             echo "## DMA 动态监测"
             echo "- 运行频率：每天 UTC 06:17（北京时间 14:17）"
+            echo "- 实际 RSS 来源：${SOURCE_USED}"
+            echo "- 最后成功抓取（UTC）：${LAST_SUCCESSFUL_FETCH}"
             echo "- 新增动态：${NEW_COUNT} 条"
             echo "- 新增处罚相关动态：${PENALTY_COUNT} 条"
             if [ -n "${NEW_ITEMS_JSON:-}" ]; then

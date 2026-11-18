@@ -22,6 +22,29 @@ class CheckUpdatesTests(unittest.TestCase):
         self.assertEqual(urlopen.call_count, 2)
         sleep.assert_called_once_with(2)
 
+    def test_fetch_from_sources_uses_fallback_after_primary_failure(self):
+        sources = (
+            ("primary", "https://primary.example.test/rss"),
+            ("fallback", "https://fallback.example.test/rss"),
+        )
+        with patch.object(
+            check_updates,
+            "fetch_rss",
+            side_effect=[TimeoutError("primary unavailable"), b"<rss />"],
+        ) as fetch_rss:
+            payload, source = check_updates.fetch_from_sources(sources)
+
+        self.assertEqual(payload, b"<rss />")
+        self.assertEqual(source, "https://fallback.example.test/rss")
+        self.assertEqual(
+            fetch_rss.call_args_list[0].args,
+            ("https://primary.example.test/rss",),
+        )
+        self.assertEqual(
+            fetch_rss.call_args_list[1].args,
+            ("https://fallback.example.test/rss",),
+        )
+
     def test_merge_items_deduplicates_links_and_sorts_new_items_first(self):
         self.assertTrue(callable(getattr(check_updates, "merge_items", None)))
 
@@ -74,6 +97,21 @@ class CheckUpdatesTests(unittest.TestCase):
         self.assertIn("penalty_count=1", output)
         self.assertIn('"title": "Commission fines Google"', output)
 
+    def test_write_github_outputs_reports_source_and_last_successful_fetch(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = Path(temp_dir) / "github-output"
+            with patch.dict(os.environ, {"GITHUB_OUTPUT": str(output_path)}):
+                check_updates.write_github_outputs(
+                    [],
+                    source_used="https://fallback.example.test/rss",
+                    last_successful_fetch="2026-11-18T06:17:00+00:00",
+                )
+
+            output = output_path.read_text(encoding="utf-8")
+
+        self.assertIn("source_used=https://fallback.example.test/rss", output)
+        self.assertIn("last_successful_fetch=2026-11-18T06:17:00+00:00", output)
+
     def test_main_does_not_rewrite_output_when_no_new_items(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             output_path = Path(temp_dir) / "updates.json"
@@ -89,10 +127,16 @@ class CheckUpdatesTests(unittest.TestCase):
 
             with patch.object(check_updates, "OUTPUT", output_path), patch.object(
                 check_updates, "fetch_rss", return_value=b"<rss><channel /></rss>"
+            ), tempfile.TemporaryDirectory() as output_dir, patch.dict(
+                os.environ, {"GITHUB_OUTPUT": str(Path(output_dir) / "github-output")}
             ):
                 check_updates.main()
+                monitor_output = (Path(output_dir) / "github-output").read_text(encoding="utf-8")
 
             self.assertEqual(output_path.read_text(encoding="utf-8"), original)
+            self.assertIn("changed=false", monitor_output)
+            self.assertIn("source_used=https://ec.europa.eu/commission/presscorner/api/rss?language=en", monitor_output)
+            self.assertIn("last_successful_fetch=", monitor_output)
 
 
 if __name__ == "__main__":

@@ -3,7 +3,6 @@ import { DATA_AS_OF, formatDate, formatFine } from '@/data/cases'
 import type { DashboardMetrics } from '@/data/dashboardMetrics'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import Charts from '@/sections/Charts'
 
 interface DashboardOverviewProps {
   metrics: DashboardMetrics
@@ -100,7 +99,6 @@ export default function DashboardOverview({ metrics, lastStoredUpdate }: Dashboa
         </Card>
       </div>
 
-      <Charts metrics={metrics} />
     </div>
   )
 }

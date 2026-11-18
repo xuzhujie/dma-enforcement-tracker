@@ -5,8 +5,8 @@
 ## 功能
 
 - **案件总览**：全部 DMA 罚款决定（Apple €5 亿、Meta €2 亿、Alphabet €4.6 亿 + €4.3 亿）、在办程序、已结案事项与关联反垄断案件
-- **驾驶舱 / 筛选 / 时间线 / 统计图表**：待关注案件、数据新鲜度、累计罚款趋势、守门人和条款拆分；也可按类型、公司、条款筛选并查看执法里程碑
-- **自动监测动态**：GitHub Actions 每天抓取欧委会 Press Corner 官方 RSS，筛出 DMA 相关新闻；有新内容才提交更新
+- **驾驶舱 / 筛选 / 时间线 / 统计图表**：待关注案件、数据新鲜度、累计罚款趋势、守门人和条款拆分；也可按类型、公司、条款筛选并查看执法里程碑。统计图表在打开对应标签页时按需加载，减少首屏包体
+- **自动监测动态**：GitHub Actions 每天抓取欧委会 Press Corner 官方 RSS，筛出 DMA 相关新闻；英语 RSS 为主源，法语 RSS 为备用源，有新内容才提交更新
 - **静态速览页**：`/static/` 路径下的纯 HTML 单页，适合打印与分享
 
 ## GitHub 自动化
@@ -18,7 +18,7 @@
 - 默认页面入口为“驾驶舱”；案件卡片、时间线和完整统计图表仍保留在同一页面
 - 首次使用时，在仓库 Settings → Pages → Source 选择 **GitHub Actions**
 
-每次监测运行都会写入 GitHub Actions Summary。GitHub 自带的失败运行通知继续有效；默认不向第三方发送消息。
+每次监测运行都会写入 GitHub Actions Summary，其中包含实际使用的 RSS 来源和最后成功抓取时间（UTC）。这个时间戳不写入仓库，因此成功但无新动态的运行不会制造每日状态提交。GitHub 自带的失败运行通知继续有效；默认不向第三方发送消息。
 
 ### 可选 Webhook 通知
 
@@ -34,7 +34,7 @@
 - 案件主数据在 `src/data/cases.ts`，人工维护，以官方原文为准；罚款金额、上诉案号、启动/决定日期等字段不由 RSS 自动推断
 - 静态速览页在 `public/static/index.html`，更新案件主数据时需同步维护
 - 动态监测数据在 `public/data/updates.json`，由 `scripts/check_updates.py` 自动更新
-- 监测脚本只覆盖 Press Corner RSS 当前返回窗口内的新闻，不是欧委会案件登记库的完整同步；“没有新动态”不等于“没有新案件或程序变化”
+- 监测脚本按“英语 Press Corner RSS → 法语 Press Corner RSS”顺序尝试，每个来源都有短暂故障重试；它只覆盖 RSS 当前返回窗口内的新闻，不是欧委会案件登记库的完整同步；“没有新动态”不等于“没有新案件或程序变化”
 - 官方来源：[DMA 官方门户](https://digital-markets-act.ec.europa.eu/index_en) · [DMA 案件登记库](https://digital-markets-act-cases.ec.europa.eu/) · [竞争案件检索系统](https://competition-cases.ec.europa.eu/) · [Press Corner](https://ec.europa.eu/commission/presscorner/home/en)
 
 ## 本地开发

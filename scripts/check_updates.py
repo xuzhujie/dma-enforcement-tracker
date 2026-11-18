@@ -36,6 +36,9 @@ KEYWORD_PATTERNS = [
     re.compile(r"\bDMA\b"),
     re.compile(r"gatekeeper", re.I),
     re.compile(r"core platform service", re.I),
+    re.compile(r"marchés numériques", re.I),
+    re.compile(r"service(?:s)? de plateforme essentiel(?:s)?", re.I),
+    re.compile(r"contrôleur(?:s)? d['’]accès", re.I),
 ]
 
 PENALTY_PATTERNS = [
@@ -43,6 +46,9 @@ PENALTY_PATTERNS = [
     re.compile(r"\bfined\b", re.I),
     re.compile(r"penalt", re.I),
     re.compile(r"non-compliance decision", re.I),
+    re.compile(r"\bamendes?\b", re.I),
+    re.compile(r"\bsanctions?\b", re.I),
+    re.compile(r"non[- ]conformité", re.I),
     re.compile(r"罚款"),
 ]
 

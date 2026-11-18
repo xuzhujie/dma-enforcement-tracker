@@ -56,6 +56,31 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: 发送邮件通知
+        if: steps.monitor.outputs.changed == 'true'
+        env:
+          NEW_ITEMS_JSON: ${{ steps.monitor.outputs.new_items_json }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          NOTIFY_SMTP_HOST: ${{ vars.NOTIFY_SMTP_HOST }}
+          NOTIFY_SMTP_PORT: ${{ vars.NOTIFY_SMTP_PORT || '587' }}
+          NOTIFY_SMTP_USERNAME: ${{ secrets.NOTIFY_SMTP_USERNAME }}
+          NOTIFY_SMTP_PASSWORD: ${{ secrets.NOTIFY_SMTP_PASSWORD }}
+          NOTIFY_EMAIL_FROM: ${{ secrets.NOTIFY_EMAIL_FROM }}
+          NOTIFY_EMAIL_TO: ${{ secrets.NOTIFY_EMAIL_TO }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NOTIFY_SMTP_HOST:-}" ] || \
+            [ -z "${NOTIFY_SMTP_USERNAME:-}" ] || \
+            [ -z "${NOTIFY_SMTP_PASSWORD:-}" ] || \
+            [ -z "${NOTIFY_EMAIL_FROM:-}" ] || \
+            [ -z "${NOTIFY_EMAIL_TO:-}" ]; then
+            echo "::warning::发现新 DMA 动态，但邮件通知尚未配置；请参照 README 设置 SMTP 变量和 Secrets。"
+            echo "- 邮件通知：未配置，已跳过" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          python3 scripts/send_email.py
+          echo "- 邮件通知：已发送" >> "$GITHUB_STEP_SUMMARY"
+
       - name: 提交更新
         if: steps.monitor.outputs.changed == 'true'
         run: |

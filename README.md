@@ -18,7 +18,23 @@
 - 默认页面入口为“驾驶舱”；案件卡片、时间线和完整统计图表仍保留在同一页面
 - 首次使用时，在仓库 Settings → Pages → Source 选择 **GitHub Actions**
 
-每次监测运行都会写入 GitHub Actions Summary，其中包含实际使用的 RSS 来源和最后成功抓取时间（UTC）。这个时间戳不写入仓库，因此成功但无新动态的运行不会制造每日状态提交。GitHub 自带的失败运行通知继续有效；默认不向第三方发送消息。
+每次监测运行都会写入 GitHub Actions Summary，其中包含实际使用的 RSS 来源和最后成功抓取时间（UTC）。这个时间戳不写入仓库，因此成功但无新动态的运行不会制造每日状态提交。GitHub 自带的失败运行通知继续有效；新动态邮件在监测成功后、提交数据前发送。
+
+### 邮件通知
+
+邮件通知按以下规则运行：
+
+- 新处罚：发送高优先级邮件，主题标明“新处罚”
+- 新 DMA 动态：发送普通动态邮件
+- 没有新内容：不发送邮件
+- 邮件发送失败：工作流失败，由 GitHub 自带失败通知邮件负责提醒
+
+在仓库 Settings → Secrets and variables → Actions 中配置：
+
+- Actions variable：`NOTIFY_SMTP_HOST`，例如 `smtp.gmail.com`；`NOTIFY_SMTP_PORT` 可选，默认 `587`（端口 `465` 使用 SSL）
+- Actions secrets：`NOTIFY_SMTP_USERNAME`、`NOTIFY_SMTP_PASSWORD`、`NOTIFY_EMAIL_FROM`、`NOTIFY_EMAIL_TO`
+
+`NOTIFY_EMAIL_TO` 可填写逗号分隔的多个收件人。未配置邮件参数时，发现新动态会在 Actions Summary 中给出警告并跳过邮件，不影响数据提交；完成配置后即按上述规则运行。
 
 ### 可选 Webhook 通知
 

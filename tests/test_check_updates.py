@@ -78,6 +78,27 @@ class CheckUpdatesTests(unittest.TestCase):
             )
         )
 
+    def test_is_penalty_item_recognizes_french_penalty_terms_from_fallback_feed(self):
+        self.assertTrue(
+            check_updates.is_penalty_item(
+                {"title": "La Commission inflige une amende", "summary": "Marchés numériques"}
+            )
+        )
+
+    def test_parse_items_accepts_french_dma_terms_from_fallback_feed(self):
+        xml = """
+        <rss><channel><item>
+          <title>La Commission publie des orientations sur les marchés numériques</title>
+          <link>https://example.test/french-dma</link>
+          <description>Information sur les services de plateforme essentiels.</description>
+          <pubDate>Wed, 18 Nov 2026 08:00:00 GMT</pubDate>
+        </item></channel></rss>
+        """.encode()
+
+        items = check_updates.parse_items(xml)
+
+        self.assertEqual([item["link"] for item in items], ["https://example.test/french-dma"])
+
     def test_write_github_outputs_reports_change_and_penalty_count(self):
         self.assertTrue(callable(getattr(check_updates, "write_github_outputs", None)))
 

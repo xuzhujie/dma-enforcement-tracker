@@ -7,7 +7,10 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 
-from scripts.check_updates import is_penalty_item
+if __package__:
+    from scripts.check_updates import is_penalty_item
+else:
+    from check_updates import is_penalty_item
 
 
 def _clean_text(value: object) -> str:

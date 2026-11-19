@@ -1,4 +1,6 @@
 import { formatDate, formatFine, type DmaCase } from '@/data/cases'
+import { getCaseCopy } from '@/lib/i18n'
+import { useLanguage } from '@/lib/LanguageContext'
 
 interface TimelineEvent {
   date: string
@@ -16,13 +18,15 @@ const DOT_COLOR: Record<string, string> = {
 }
 
 export default function Timeline({ items }: { items: DmaCase[] }) {
+  const { locale } = useLanguage()
   const events: TimelineEvent[] = items.flatMap((c) => {
+    const localized = getCaseCopy(c, locale)
     const evts: TimelineEvent[] = []
     if (c.openedDate) {
-      evts.push({ date: c.openedDate, label: c.openedLabel ?? '启动程序', caseTitle: c.title, fine: null, category: c.category })
+      evts.push({ date: c.openedDate, label: localized.openedLabel ?? (locale === 'en' ? 'Proceeding opened' : '启动程序'), caseTitle: localized.title, fine: null, category: c.category })
     }
     if (c.decisionDate) {
-      evts.push({ date: c.decisionDate, label: c.decisionLabel ?? '作出决定', caseTitle: c.title, fine: c.fine, category: c.category })
+      evts.push({ date: c.decisionDate, label: localized.decisionLabel ?? (locale === 'en' ? 'Decision issued' : '作出决定'), caseTitle: localized.title, fine: c.fine, category: c.category })
     }
     return evts
   })
@@ -33,11 +37,11 @@ export default function Timeline({ items }: { items: DmaCase[] }) {
       {events.map((e, i) => (
         <div key={i} className="relative pb-7">
           <span className={`absolute -left-[31px] top-1.5 h-3.5 w-3.5 rounded-full border-2 border-white ${DOT_COLOR[e.category]}`} />
-          <div className="text-xs font-medium uppercase tracking-wide text-slate-400">{formatDate(e.date)}</div>
+          <div className="text-xs font-medium uppercase tracking-wide text-slate-400">{formatDate(e.date, locale)}</div>
           <div className="mt-0.5 font-semibold text-slate-800">
             {e.label}
             {e.fine != null && (
-              <span className={`ml-2 ${e.category === 'related' ? 'text-amber-600' : 'text-red-600'}`}>{formatFine(e.fine)}</span>
+              <span className={`ml-2 ${e.category === 'related' ? 'text-amber-600' : 'text-red-600'}`}>{formatFine(e.fine, locale)}</span>
             )}
           </div>
           <div className="text-sm text-slate-500">{e.caseTitle}</div>

@@ -300,13 +300,21 @@ export const officialSources = [
   { label: '欧委会 Press Corner', url: 'https://ec.europa.eu/commission/presscorner/home/en', desc: '执法新闻稿首发渠道' },
 ]
 
-export function formatFine(millions: number): string {
+export function formatFine(millions: number, locale: 'zh' | 'en' = 'zh'): string {
+  if (locale === 'en') {
+    if (millions >= 1000) return `€${(millions / 1000).toFixed(millions % 1000 === 0 ? 0 : 2)}bn`
+    return `€${millions}m`
+  }
   if (millions >= 100) return `€${(millions / 100).toFixed(millions % 100 === 0 ? 0 : 1)}亿`
   return `€${millions}00 万`
 }
 
-export function formatDate(iso: string): string {
+export function formatDate(iso: string, locale: 'zh' | 'en' = 'zh'): string {
   const [y, m, d] = iso.split('-').map(Number)
+  if (locale === 'en') {
+    return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+      .format(new Date(Date.UTC(y, m - 1, d)))
+  }
   return `${y} 年 ${m} 月 ${d} 日`
 }
 

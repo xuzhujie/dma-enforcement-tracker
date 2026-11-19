@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "tsx --test tests/dashboard_metrics.test.ts",
+    "test": "tsx --test tests/dashboard_metrics.test.ts tests/i18n.test.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
